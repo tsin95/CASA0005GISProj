@@ -1,11 +1,11 @@
-name: "MyLabJournal"
+name: "My GIS Project Website"
 navbar:
-  title: "MyLabJournal"
+  title: "My GIS Project Website"
   left:
     - text: "Home"
       href: index.html
-    - text: "Journal"
+    - text: "My Code and Outputs"
       href: Journal.html
-    - text: "Links"
+    - text: "Acknowledgements and Links"
       href: Links.html
 output_dir: "docs"

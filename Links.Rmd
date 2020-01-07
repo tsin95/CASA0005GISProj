@@ -1,19 +1,26 @@
 ---
-title: "Resources"
+title: "Acknowledgements and Links"
 output: html_document
 ---
 
-### R and R-Studio
+### My lecturers Andy MacLachlan and Adam Dennett
 
-[R](http://www.r-project.org) is a free open-source programming language that can be used for statistical analysis, data-simulation, graphing, and lots of other stuff. Another free program is [R-studio](http://www.rstudio.com), that provides a nice graphic interface for R. Download R first, then download R-studio. Both can run on PCs, Macs or Linux. Students will be learning R in the stats labs using the lab manual []().
+Both of them have been nothing short of wonderfully helpful in patiently explaining problems and going through bugs in my R code with me (a particularly nightmarish one included a space in a folder name causing my data to be unreadable!). A mighty challenge to impart GIS skills in such a short span of time indeed! While I have taken some code from their detailed practicals [here](https://andrewmaclachlan.github.io/CASA0005repo/index.html), all shortcomings and mistakes in this piece of work are mine alone.
 
-### Additional R resources
+### Matthew Crump 
 
-1. Google is great, Google your problem
-2. [Stackoverflow](https://stackoverflow.com) is great, google will often take you there because someone has already asked your question, and someone else has answered, usually many people have answered your question many ways.
-3. Danielle Navarro wrote a [free Psych Stats textbook using R](https://compcogscisydney.org/learning-statistics-with-r/), it's worth checking out (some of our textbook are based on Danielle's)
-4. I am currently writing another stats textbook (incorporating some of the above). You can read it while it's being made right here [https://crumplab.github.io/statistics/](https://crumplab.github.io/statistics/), also check out the lab manual for more specific things about doing various stats in R (also in draft right now) [https://crumplab.github.io/statisticsLab/](https://crumplab.github.io/statisticsLab/)
-5. Daniell Navarro recently made this website for introducing R, it's great, check it out (also made using this R markdown process): [http://compcogscisydney.org/psyr/](http://compcogscisydney.org/psyr/)
-6. Check out my slightly older programming book that also introduces R [https://crumplab.github.io/programmingforpsych/](https://crumplab.github.io/programmingforpsych/)
-7. This is the definitive guide for all things R Markdown (you will find this very useful as you get better at this skill): [https://bookdown.org/yihui/rmarkdown/](https://bookdown.org/yihui/rmarkdown/)
+His very informative guide on how to publish an R Markdown Website on Github Pages came in super handy for me [here](https://www.youtube.com/watch?v=nc7XhQrasCM&t=250s). I published this webpage with the help of files forked from his [repository](https://github.com/CrumpLab/LabJournalWebsite). Have a look to see how you can create your very own R Markdown Website too! 
+
+### Emily Burchfield
+
+Her detailed site on point pattern analysis, and especially on the G and F functions, were very enlightening for my learning and research purposes. Great analysis and very accessible content - check it out [here](https://eburchfield.github.io/files/Point_pattern_LAB.html).
+
+### Mark Burkey
+
+His informative and step-by-step video on different spatial regression models was great! Worthy of mention was how there was a .txt file of code for the Lagrange Multiplier Tests, and how it was clearly explained. I learnt so much about the implementation of different spatial regression models from his efforts! If you're looking for information on Spatially Lagged X models, Spatial Lag Models, or Spatial Error Models in R - [here](https://www.youtube.com/watch?v=b3HtV2Mhmvk&t=2041s) is the place.
+
+### My report/write-up
+ 
+You can find my completed report in my Github repository, but I will link it [PLACEHOLDER](https://www.youtube.com/watch?v=nc7XhQrasCM&t=250s) again.
+
 
