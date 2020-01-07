@@ -863,7 +863,7 @@ I_MWard_Global_Density
 ```
 
 ## 10b. Geary's C across Manchester city
-Geary's C test: insufficient evidence to reject the null hypothesis that similar values of crime densities are clustering
+Geary's C test: 
 ```{r}
 C_MWard_Global_Density <- geary.test(manchester_final@data$crimedensity, Mward.queens_weight)
 C_MWard_Global_Density
