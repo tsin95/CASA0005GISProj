@@ -205,3 +205,897 @@ tm_shape(polsub) +
 
 manchester_merged is the map of Manchester city with merged data on population density, social grade and SES.
 
+# 2. Plotting/performing KDE for crime data in Manchester city
+
+Next step would be to map the crime datapoints onto the Manchester basemap. Crime data for June 2019 for the Greater Manchester area was used. This was taken from https://data.police.uk/data/ 
+
+
+
+
+```{r}
+crime <- read_csv("manchester_crime.csv")
+crime_locations <- st_as_sf(crime, coords = c("Longitude","Latitude"), crs = 4326)
+class(crime)
+require(sf)
+crime_sf <- st_as_sf(x = crime, 
+                        coords = c("Longitude", "Latitude"),
+                        crs = "+init=epsg:4326")
+# simple plot
+plot(crime_sf)
+
+crime_spdf <- as(crime_sf, "Spatial")
+
+
+manchester_crime_test<-ggplot(crime, aes(x=Longitude,y=Latitude))+geom_point()+coord_equal()
+manchester_crime_test
+
+```
+Plotting a 2D KDE of crime occurences in Manchester using the longitude and latitude data in the crime dataset
+```{r}
+manchester_crime_test<-ggplot(crime, aes(x=Longitude,y=Latitude))+stat_bin2d(bins=30)
+manchester_crime_test
+```
+Plotting a continuous distribution instead
+```{r}
+manchester_crime_test+stat_density2d(aes(fill = ..level..), geom="polygon")
+```
+
+Plotting the crime datapoints to test
+```{r}
+plot(crime_locations)
+```
+
+Examining metadata of the crime datapoints
+```{r}
+summary(crime_locations)
+```
+
+Checking CRS of crime datapoints
+```{r}
+crs(crime_locations)
+```
+Checking type of data of the crimem locations - sf, tbl_df, tbl, data.frame
+```{r}
+class(crime_locations)
+```
+Ensuring that crime_locations has EPSG 4326 as CRS
+```{r}
+crime_locations_sp <- as(crime_locations, 'Spatial')
+crime_locations_sp <- spTransform(crime_locations_sp, CRS("+init=epsg:4326"))
+```
+Checking new CRS of crime datapoints and data type, removing duplicates
+```{r}
+crs(crime_locations)
+
+```
+
+
+```{r}
+class(crime_locations)
+```
+
+Plotting crime data points on Manchester basemap
+```{r}
+mapview::mapview(manchester_merged) + mapview::mapview(crime_locations, color = "white", col.regions = "black",legend=FALSE, title = "Crime occurences in Manchester city")
+```
+
+# 3. Descriptive statistics for data
+```{r}
+library(tidyverse)
+library(downloader)
+library(rgdal)
+library(sf)
+library(ggplot2)
+library(reshape2)
+library(plotly)
+library(highcharter)
+```
+
+Histograms for each of the scale variables - population densities, deprivation, and SES
+Starting with popdens
+```{r}
+# Histogram with mean line (red) and median line (blue) and density plot
+ggplot(popdens, aes(x=popdens)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=10)+
+ geom_density(alpha=.2, fill="#FF6666") + geom_vline(aes(xintercept=mean(popdens)),
+            color="red", linetype="dashed", size=1) + geom_vline(aes(xintercept=median(popdens)),
+            color="blue", linetype="dashed", size=1) 
+
+# Descriptive statistics
+print(max(popdens$popdens))
+print(min(popdens$popdens))
+print(median(popdens$popdens))
+print(sd(popdens$popdens))
+print(IQR(popdens$popdens))
+print(quantile(popdens$popdens, c(.25, .75)))
+
+```
+Plotting histogram for deprivation next
+```{r}
+# Histogram with mean line (red) and median line (blue) and density plot
+ggplot(depr, aes(x=deprivation)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth= 0.1)+
+ geom_density(alpha=.2, fill="#FF6666") + geom_vline(aes(xintercept=mean(deprivation)),
+            color="red", linetype="dashed", size=1) + geom_vline(aes(xintercept=median(deprivation)),
+            color="blue", linetype="dashed", size=1) 
+
+# Descriptive statistics
+print(max(depr$deprivation))
+print(min(depr$deprivation))
+print(median(depr$deprivation))
+print(sd(depr$deprivation))
+print(IQR(depr$deprivation))
+print(quantile(depr$deprivation, c(.25, .75)))
+```
+Plotting histogram for social grade next
+```{r}
+# Histogram with mean line (red) and median line (blue) and density plot
+ggplot(ses, aes(x=socialgrade)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth= 0.1)+
+ geom_density(alpha=.2, fill="#FF6666") + geom_vline(aes(xintercept=mean(socialgrade)),
+            color="red", linetype="dashed", size=1) + geom_vline(aes(xintercept=median(socialgrade)),
+            color="blue", linetype="dashed", size=1) 
+
+# Descriptive statistics
+print(max(ses$socialgrade))
+print(min(ses$socialgrade))
+print(median(ses$socialgrade))
+print(sd(ses$socialgrade))
+print(IQR(ses$socialgrade))
+print(quantile(ses$socialgrade, c(.25, .75)))
+```
+Plotting histogram for crimes recorded per ward next
+```{r}
+#reading in data for crimes recorded per ward (taken from later part of the code after performing count)
+library(readr)
+crime_ward <- read_csv("crime_ward.csv")
+summary(crime_ward)
+crime_ward$lnCrime <- log1p(crime_ward$crimes)
+# Histogram with mean line (red) and median line (blue) and density plot
+ggplot(crime_ward, aes(x=lnCrime)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth= 0.05)+
+ geom_density(alpha=.2, fill="#FF6666") + geom_vline(aes(xintercept=mean(lnCrime)),
+            color="red", linetype="dashed", size=1) + geom_vline(aes(xintercept=median(lnCrime)),
+            color="blue", linetype="dashed", size=1) 
+
+# Descriptive statistics
+print(max(crime_ward$crimes))
+print(min(crime_ward$crimes))
+print(median(crime_ward$crimes))
+print(sd(crime_ward$crimes))
+print(IQR(crime_ward$crimes))
+print(quantile(crime_ward$crimes, c(.25, .75)))
+```
+
+Converting both cityManchester and crime_locations to data.frames to run the KDE, since it requires numeric input
+```{r}
+df_cityManchester <- as.data.frame(cityManchester)
+df_crime_locations <- as.data.frame(crime_locations)
+```
+Create two separate fields for latitude and longitude from the manchester spatialpolygonsdataframe 
+```{r}                                                                                                                                                                
+polys = attr(cityManchester,'polygons')
+npolys = length(polys)
+for (i in 1:npolys){
+  poly = polys[[i]]
+  polys2 = attr(poly,'Polygons')
+  npolys2 = length(polys2)
+  for (j in 1:npolys2){
+     #do stuff with these values
+     coords = coordinates(polys2[[j]])
+     
+  }
+}
+coords_df <- as.data.frame(coords)
+```
+Plotting out crime occurences in Manchestaer city
+```{r}
+ggplot() + geom_polygon(data = coords_df, aes(x = V1, y = V2), fill = "grey75") +
+  geom_point(data = crime, aes(x = Longitude, y = Latitude),
+             col = "dodger blue", alpha = .5, size = 1.5) +
+  coord_equal() +
+  ggtitle("Crime occurences in Manchester")
+  
+```
+
+
+Counting number of crime occurence points per polygon
+```{r}
+class(manchester_merged)
+class(crime_spdf)
+proj4string(manchester_merged)
+
+crime_spdf <- spTransform(crime_spdf, CRS("+init=epsg:4326"))
+proj4string(crime_spdf)
+plot(manchester_merged)
+plot(crime_spdf, col="red" , add=TRUE)
+res <- over(crime_spdf, manchester_merged)
+table(res$name)
+```
+After plotting number of crimes per ward on a .csv file, time to merge with the manchester_merged basemap.
+Reading in the dataset for crimes per ward using code chunk directly above
+```{r}
+summary(crime_ward)
+```
+Joining crimes per ward dataset with the Manchester basemap 
+```{r}
+manchester_merged_final <- merge(x= manchester_merged, y=crime_ward, by.x = "name", by.y = "geography")
+```
+
+Plotting map to check if join has succeeded. 
+```{r}
+library(tmap)
+tmap_mode("view")
+tm_shape(manchester_merged_final) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(polsub) +
+  tm_dots(col = "blue")
+```
+All data (popdens, social grade, SES, crime) on ward level loaded, locations of 4 police stations in Manchester city also loaded. 
+
+# 4. Choropleth maps by variables across Manchester
+
+Making a choropleth map by crimes
+```{r}
+library(ggplot2)
+library(RColorBrewer)
+library(classInt)
+names(manchester_merged_final)
+#spplot(manchester_merged_final, "crimes")
+# quantile breaks
+breaks_qt <- classIntervals(manchester_merged_final$crimes, n = 7, style = "quantile")
+br <- breaks_qt$brks 
+offs <- 0.0000001 
+br[1] <- br[1] - offs 
+br[length(br)] <- br[length(br)] + offs 
+# categories for choropleth map
+manchester_merged_final$crimes_bracket <- cut(manchester_merged_final$crimes, br)
+# plot
+#my.palette <- brewer.pal(n = 7, name = "OrRd")
+#spplot(manchester_merged_final, "crimes_bracket", col.regions=my.palette, main = "Manchester City Recorded Crimes in June 2019 by Ward")
+
+#Using tmap
+library(tmap)
+tm_shape(manchester_merged_final) +
+  tm_polygons("crimes", 
+              style="quantile", 
+              title="Manchester city \nrecorded crimes \nby ward in June 2019")
+tmap_mode("view")
+```
+Making a choropleth map by popdens
+```{r}
+# quantile breaks
+breaks_qt <- classIntervals(manchester_merged_final$popdens, n = 7, style = "quantile")
+br <- breaks_qt$brks 
+offs <- 0.0000001 
+br[1] <- br[1] - offs 
+br[length(br)] <- br[length(br)] + offs 
+
+# categories for choropleth map
+manchester_merged_final$popdens_bracket <- cut(manchester_merged_final$popdens, br)
+# plot
+#spplot(manchester_merged_final, "popdens_bracket", col.regions=my.palette, main = "Manchester City Population Density by Ward")
+
+#Using tmap
+library(tmap)
+tm_shape(manchester_merged_final) +
+  tm_polygons("popdens", 
+              style="quantile", 
+              title="Manchester city \nPopulation Density \nby ward")
+tmap_mode("view")
+```
+
+Making a choropleth map by deprivation
+```{r}
+#spplot(manchester_merged_final, "deprivation")
+breaks_qt <- classIntervals(manchester_merged_final$deprivation, n = 7, style = "quantile")
+br <- breaks_qt$brks 
+offs <- 0.0000001 
+br[1] <- br[1] - offs 
+br[length(br)] <- br[length(br)] + offs 
+# categories for choropleth map
+manchester_merged_final$deprivation_bracket <- cut(manchester_merged_final$deprivation, br)
+# plot
+
+#spplot(manchester_merged_final, "deprivation_bracket", col.regions=my.palette, main = "Manchester City deprivation by Ward")
+#Using tmap
+library(tmap)
+tm_shape(manchester_merged_final) +
+  tm_polygons("deprivation", 
+              style="quantile", 
+              title="Manchester city \ndeprivation \nby ward")
+tmap_mode("view")
+```
+
+Making a choropleth map by social grade
+```{r}
+#spplot(manchester_merged_final, "socialgrade")
+breaks_qt <- classIntervals(manchester_merged_final$socialgrade, n = 7, style = "quantile")
+br <- breaks_qt$brks 
+offs <- 0.0000001 
+br[1] <- br[1] - offs 
+br[length(br)] <- br[length(br)] + offs 
+# categories for choropleth map
+manchester_merged_final$socialgrade_bracket <- cut(manchester_merged_final$socialgrade, br)
+# plot
+#spplot(manchester_merged_final, "socialgrade_bracket", col.regions=my.palette, main = "Manchester City social grade by Ward")
+#Using tmap
+library(tmap)
+tm_shape(manchester_merged_final) +
+  tm_polygons("socialgrade", 
+              style="quantile", 
+              title="Manchester city \nsocial grade \nby ward")
+tmap_mode("view")
+```
+
+
+# 5. Zooming in on Bradford (single ward)
+Next, point pattern analysis will be conducted, to confirm the visual suspicion that there is spatial clustering of crimes within Manchester city. 
+The entire Manchester city was too large to conduct analysis on, and hence this particular study zoomed in on a particular ward - Bradford. Bradford was picked as it has two police stations, so it would make an interesting study to see if the clusters are near the police stations.
+
+We have to create an observation window for spatstat to carry out analysis within – set to the extent of the Bradford ward.
+
+Thus, pull out the Bradford ward.
+```{r}
+#extract the Bradford ward
+bradford <- manchester_merged_final[manchester_merged_final@data$name=="Bradford",]
+#Checking to see if it has been pulled out successfully
+tm_shape(bradford) +
+  tm_polygons(col = NA, alpha = 0.5)
+#sf object:
+bradfordSF <- st_as_sf(manchester_merged_final)
+bradfordSF <- bradfordSF[bradfordSF$name=="Bradford",]
+```
+
+
+
+We need to clip the crime occurence datapoints so that we have a subset of just those that fall within the Bradford ward. 
+```{r}
+#clip the data to our single ward
+library(maptools)
+crime_respdf <- readShapePoints("crime_exported.shp", proj4string = CRS("+init=epsg:4326 +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"), verbose = FALSE, repair=FALSE)
+
+
+polsub_bradford <- polsub[bradford,]
+```
+
+Check that it's worked - blue dots are crime occurrences and red dots are police stations in Bradford
+
+```{r}
+
+crime_bradford <- crime_respdf[bradford,]
+crs(crime_bradford)
+tmap_mode("view")+tm_shape(bradford) +tm_polygons(col = NA, alpha = 0.5) +tm_shape(crime_respdf[bradford,]) +  tm_dots(col = "blue") + tm_shape(polsub_bradford) +tm_dots(col = "red")
+```
+
+
+# 6. KDE for crimes in Bradford
+Create an observation window for spatstat to carry out analysis
+```{r}
+library(spatstat)
+library(sp)
+library(rgeos)
+library(maptools)
+library(GISTools)
+library(tmap)
+library(sf)
+library(geojson)
+library(geojsonio)
+library(tmaptools)
+```
+
+```{r}
+BNG = "+init=epsg:27700"
+bradfordBNG <- spTransform(bradford,BNG)
+window <- as.owin(bradfordBNG)
+plot(window)
+crime_bradfordBNG <-spTransform(crime_bradford,BNG) 
+```
+For point pattern analysis, have to create a point pattern (ppp) object
+```{r}
+
+crime_bradford.ppp <- ppp(x=crime_bradfordBNG@coords[,1],y=crime_bradfordBNG@coords[,2],window=window)
+```
+Checking the ppp object
+```{r}
+plot(crime_bradford.ppp,pch=16,cex=0.5, main="Crime occurrences in Manchester city, Bradford ward, June 2019")
+class(crime_bradford.ppp)
+summary(crime_bradford.ppp)
+plot(crime_bradford)
+```
+
+Plotting KDE for crime occurences in Bradford ward
+```{r}
+ds <- density(crime_bradford.ppp)
+class(ds)
+plot(ds, main = "Crime density in Bradford ward, Manchester city, June 2019")
+```
+
+Doing the same with contours
+```{r}
+K1 <- density(crime_bradford.ppp) # Using the default bandwidth
+plot(K1, main=NULL, las=1)
+contour(K1, add=TRUE)
+```
+
+Changing bandwidth
+```{r}
+K2 <- density(crime_bradford.ppp, sigma=50) # Using a 50km bandwidth
+plot(K2, main=NULL, las=1)
+contour(K2, add=TRUE)
+```
+
+# 7. Testing for CSR in Bradford
+Testing for spatial randomness of crime occurrences in Bradford ward, Manchester city
+
+## 7a. Ripley's K
+```{r}
+K <- Kest(crime_bradford.ppp, correction="border")
+plot(K)
+```
+
+Theoretical model of CSR, compare actual results to that. 
+
+## 7b. Kolmogorov-Smirnoff test for CSR
+With point data, we specify a real function T(x,y) defined at all locations x,y in our sampling window. We evaluate this function at each of the data points and compare the empirical values of T with the predicted distribution of T under the CSR assumptions. 
+```{r}
+ks <- cdf.test(crime_bradford.ppp, "x")
+plot(ks)
+pval <- ks$p.value
+pval
+```
+Density function as a covariate to estimate overall spatial randomness
+```{r}
+ds <- density(crime_bradford.ppp)
+k <- cdf.test(crime_bradford.ppp, ds)
+plot(k)
+```
+
+## 7c. G function test for CSR
+The G function measures the distribution of distances from an arbitrary event to its nearest event (i.e. uses nearest neighbor distances). By plotting our empirically estimated G function against our theoretical expectation if the process were CSR, we can assess the extent to which the empirical distribution of our data is different from the theoretical CSR expectation.
+```{r}
+gtest <- Gest(crime_bradford.ppp)
+gtest
+plot(gtest)
+```
+## 7d. F test for CSR
+```{r}
+ftest <- Fest(crime_bradford.ppp)
+ftest
+plot(ftest)
+```
+
+# 8. DBSCAN to determine cluster locations 
+Carrying out DBSCAN to determine where the clusters are, after having established that CSR does not hold, using the tests above.
+```{r}
+library(raster)
+library(fpc)
+library(plyr)
+library(OpenStreetMap)
+```
+Checking CRS of the bradford spatial polygon
+```{r}
+crs(bradford)
+```
+
+```{r}
+#first extract the points from the spatial points data frame
+crime_bradford_points <- data.frame(crime_bradford@coords[,1:2])
+#now run the dbscan analysis
+db <- fpc::dbscan(crime_bradford_points, eps = 0.003, MinPts = 30)
+#now plot the results
+plot(db, crime_bradford_points, main = "DBSCAN Output", frame = F)
+plot(bradford, add=T)
+```
+
+Can use kNNdistplot() from the dbscan package to find a suitable eps value based on the Ripley's K plot. Above 300metres sees a sharp spike, so 0.003 would be good.
+```{r}
+library(dbscan)
+dbscan::kNNdistplot(crime_bradford_points, k =  30)
+```
+
+Using ggplot2 to plot a nicer map
+```{r}
+library(ggplot2)
+```
+
+Calling cluster db object
+```{r}
+db
+db$cluster
+```
+
+Adding this information back into crime dataframe
+```{r}
+crime_bradford_points$cluster <- db$cluster
+```
+Creating convex hull polygons to wrap around the points in the clusters
+```{r}
+chulls <- ddply(crime_bradford_points, .(cluster), 
+                function(df) df[chull(df$coords.x1, df$coords.x2), ])
+```
+Can drop 0 from the dataframe, as they are not in clusters
+```{r}
+chulls <- subset(chulls, cluster>=1)
+```
+Creating a ggplot object from clusters 1 and 2
+```{r}
+dbplot <- ggplot(data=crime_bradford_points, 
+                 aes(coords.x1,coords.x2, colour=cluster, fill=cluster)) 
+#add the points in
+dbplot <- dbplot + geom_point()
+#now the convex hulls
+#convert spatialpointsdataframe to a dataframe as ggplot cannot handle it
+df_polsub_bradford <- data.frame(polsub_bradford)
+dbplot <- dbplot + geom_polygon(data = chulls, 
+                                aes(coords.x1,coords.x2, group=cluster), 
+                                alpha = 0.5) + geom_point(data=df_polsub_bradford,aes(x=coords.x1,y=coords.x2), inherit.aes = FALSE, color="red")
+#now plot, setting the coordinates to scale correctly and as a black and white plot 
+dbplot + theme_bw() + coord_equal()
+```
+Checking CRS for bradford
+```{r}
+crs(bradford)
+```
+Get the bbox in lat long 
+```{r}
+##First get the bbox in lat long for Bradford
+latlong <- "+init=epsg:4326" 
+bradfordWGS <-spTransform(bradford, CRS(latlong))
+bradfordWGS@bbox
+```
+Convert basemap to the same CRS
+```{r}
+basemap<-openmap(c(53.467712,-2.225532),c(53.489362,-2.149995), zoom=NULL,"stamen-toner")
+# convert the basemap to British National Grid - remember we created the 
+# BNG object right at the beginning of the practical - it's an epsg string...
+basemap_bng<-openproj(basemap, projection="+init=epsg:4326")
+```
+Adding a basemap
+```{r}
+autoplot(basemap_bng) + geom_point(data=crime_bradford_points, 
+                                   aes(coords.x1,coords.x2, 
+                                       colour=cluster, fill=cluster)) + 
+  geom_polygon(data = chulls, aes(coords.x1,coords.x2, group=cluster, fill=cluster), 
+               alpha = 0.5)   + geom_point(data=df_polsub_bradford,aes(x=coords.x1,y=coords.x2), inherit.aes = FALSE, color="red")
+```
+Plotting all crime occurences in Manchester city
+```{r}
+tm_shape(manchester_merged_final) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(crime_spdf) +
+  tm_dots(col = "blue")
+```
+
+# 9. Obtaining Spatial Weights Matrix (entire Manchester city hereafter)
+
+Calculating the area of each polygon (ward) in Manchester city
+```{r}
+library(rgdal)
+getClass("Polygon")
+manchester_merged_final$Area_sqkm<-sapply(slot(manchester_merged_final, "polygons"), function(x) sapply(slot(x, "Polygons"), slot, "area"))
+str(manchester_merged_final$Area_sqkm)
+class(manchester_merged_final$Area_sqkm)
+manchester_merged_final$Area_sqkm <- lapply(manchester_merged_final$Area_sqkm, FUN= function(x) x*12100)
+```
+Extracting the area of each ward data from manchester_merged_final
+```{r}
+citymanchester.df <- as.data.frame(manchester_merged_final)
+
+citymanchester.df$wardarea <- as.numeric(rownames(citymanchester.df))
+class(citymanchester.df$crimes)
+  class(citymanchester.df$Area_sqkm)
+citymanchester.df$Area_sqkm <- as.numeric(as.character(unlist(citymanchester.df$Area_sqkm)))
+citymanchester.df$crimedensity <- citymanchester.df$crimes / citymanchester.df$Area_sqkm
+```
+
+Joining crime density data to the manchester_merged_final map
+```{r}
+
+```
+Reading in the dataset for SES - the average social grade by ward was taken, by using a numeric scale of AB = 1, C1 = 2, C2 = 3, DE = 4, so lower numbers would mean a higher social grade.
+```{r}
+crimedensity <- read_csv("crimedensity.csv")
+summary(crimedensity)
+```
+Joining crime dennsity dataset with the Manchester basemap 
+```{r}
+manchester_final <- merge(manchester_merged_final, crimedensity, by.x = "name", by.y = "geography",duplicateGeoms = TRUE)
+```
+
+Plotting map to check if third join has succeeded
+```{r}
+tmap_mode("view")
+tm_shape(manchester_final) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(polsub) +
+  tm_dots(col = "blue")
+```
+Adding number of police stations to Manchester_final
+```{r}
+#reading in data for police stations per ward
+library(readr)
+policestns <- read_csv("policestns.csv")
+manchester_final <- merge(manchester_final, policestns, by.x = "name", by.y = "geography",duplicateGeoms = TRUE)
+```
+
+Some clustering in Manchester itself based on KDE diagrams above, and some clustering in Bradford ward (to be analysed later)
+Before being able to calculate Moran’s I and any similar statistics, we need to first define a spatial weights matrix
+```{r}
+library(spdep)
+```
+Calculating the centroids of all wards in Manchester city
+```{r}
+coordsWards <- coordinates(manchester_final)
+plot(coordsWards)
+```
+
+Generating a spatial weights matrix, using contiguity edges corners. 
+```{r}
+#create a neighbours list
+MWard_nb <- poly2nb(manchester_final, queen=T) #this is a neighbours list of queens contiguity
+knn_wards <- knearneigh(coordsWards, k=4) #THIS IS A NEIGHBOURS LIST FOR NEAREST NEIGHBOURS CONTIGUITY
+
+MWard_knn <- knn2nb(knn_wards)
+#plot neighbours list of queens contiguity
+plot(MWard_nb, coordinates(coordsWards), col="red") + plot(manchester_final, add=T)
+#plot neighbours list of nearest neighbours contiguity
+plot(MWard_knn, coordinates(coordsWards), col="red") + plot(manchester_final, add=T)
+```
+
+Create spatial weights object from weights 
+```{r}
+Mward.queens_weight <- nb2listw(MWard_nb, style="W")
+head(Mward.queens_weight)
+
+Mward.nn_weight <- nb2listw(MWard_knn, style="W")
+```
+
+
+# 10. Spatial autocorrelation 
+Now we have defined our Wij  matrix, we can calculate the Moran’s I and other associated statistics.
+
+## 10a. Moran's I across Manchester city 
+Moran’s I test tells us whether we have clustered values (close to 1) or dispersed values (close to -1), we will calculate for the densities rather than raw values. Result: SUFFICIENT EVIDENCE TO REJECT THE NULL HYPOTHESIS THAT THERE IS NO SPATIAL AUTOCORRELATION IN THE DENSITIES OF CRIME ACROSS VARIOUS MANCHESTER WARDS, as p-value smaller than 0.05
+With random data would expect value to be -0.0313, negative more often than positive, but observed result is positive
+```{r}
+I_MWard_Global_Density <- moran.test(manchester_final@data$crimedensity, Mward.queens_weight)
+I_MWard_Global_Density
+```
+
+## 10b. Geary's C across Manchester city
+Geary's C test: insufficient evidence to reject the null hypothesis that similar values of crime densities are clustering
+```{r}
+C_MWard_Global_Density <- geary.test(manchester_final@data$crimedensity, Mward.queens_weight)
+C_MWard_Global_Density
+```
+
+Calculate local versions of Moran's I statistic for each ward to see in which wards the hot-spots are
+```{r}
+#use the localmoran function to generate I for each ward in the city
+I_MWard_Local <- localmoran(manchester_final@data$crimes, Mward.queens_weight)
+I_MWard_Local_Density <- localmoran(manchester_final@data$crimedensity, Mward.queens_weight)
+#what does the output (the localMoran object) look like?
+head(I_MWard_Local_Density)
+```
+
+Copying I score and p-valule back into the manchester_final spatialpolygonsdataframe
+```{r}
+manchester_final@data$BLocI <- I_MWard_Local[,1]
+manchester_final@data$BLocIz <- I_MWard_Local[,4]
+manchester_final@data$BLocIR <- I_MWard_Local_Density[,1]
+manchester_final@data$BLocIRz <- I_MWard_Local_Density[,4]
+```
+
+Set breaks manually
+```{r}
+breaks1<-c(-1000,-2.58,-1.96,-1.65,1.65,1.96,2.58,1000)
+```
+
+Setting colour palette so higher values are redder
+```{r}
+MoranColours<- rev(brewer.pal(8, "RdGy"))
+```
+
+Plotting the map
+```{r}
+tm_shape(manchester_final) +
+    tm_polygons("BLocIRz",
+        style="fixed",
+        breaks=breaks1,
+        palette=MoranColours,
+        midpoint=NA,
+        title="Local Moran's I, Crime Occurences in Manchester by ward")
+```
+
+# 11. OLS regression
+
+Converting manchester_final to a dataframe
+```{r}
+manchester_df <- as.data.frame(manchester_final)
+#define regression equation so no need to retype each time
+reg=crimes~popdens+socialgrade+deprivation+polstns
+```
+social grade variable's frequency distribution seems to not be normal - negatively skewed (more higher values translating to LOWER social grade). Check the result of a range of transformations along Tukey's ladder.
+```{r}
+library(car)
+symbox(~`socialgrade`, manchester_df, na.rm=T, powers=seq(-3,3,by=.5))
+```
+deprivation variable's frequency distribution seems to not be normal - positively skewed (more higher values translating to GREATER deprivation). Check the result of a range of transformations along Tukey's ladder.
+```{r}
+library(car)
+symbox(~`deprivation`, manchester_df, na.rm=T, powers=seq(-3,3,by=.5))
+```
+Trying deprivation^2 for a more normal distribution
+```{r}
+ggplot(manchester_df, aes(x=(`deprivation`)^2)) + geom_histogram()
+```
+Plotting it out on a scatterplot
+```{r}
+qplot(x = (`deprivation`)^2, y = `crimes`, data=manchester_df)
+```
+qplot(x = (`deprivation`), y = `crimes`, data=manchester_df)
+Plotting crimes as dependent variable, OLS for popdens, socialgrade, deprivation
+```{r}
+m <- lm(log1p(crimes) ~ popdens + deprivation + polstns, data=manchester_df)
+summary(m)
+```
+Check if residuals are normally distributed
+```{r}
+#save the residuals into your dataframe
+manchester_df$m_resids <- m$residuals
+
+qplot(m$residuals) + geom_histogram() 
+```
+Check for multicollinearity between explanatory variables
+```{r}
+library(corrplot)
+#pull out the columns we want to check for multicolinearity
+tempdf <- manchester_df[,c("popdens","deprivation")]
+
+
+#rename the columns to something shorter
+names(tempdf) <- c("Med House Price", "Un Auth Absence")
+
+#compute the correlation matrix for the two variables of interest
+cormat <- cor(tempdf[,1:2], use="complete.obs", method="pearson")
+
+#visualise the correlation matrix
+corrplot(cormat)
+```
+Checking VIF to confirm no multicollinearity. 
+```{r}
+vif(m)
+```
+
+# 12. Checking for spatial dependence
+
+## 12a. Checking residuals
+Check if any spatial dependence in the residuals, first using queens neighbours
+```{r}
+lm.morantest(m,Mward.queens_weight)
+```
+Then using nn
+```{r}
+lm.morantest(m,Mward.nn_weight)
+```
+
+## 12b. Checking using Lagrange Multiplier Tests
+Another way to check if necessary to run a spatial model based on the OLS is to do lagrange multiplier tests. 
+```{r}
+lm.LMtests(m,Mward.nn_weight,test=c("LMerr", "LMlag", "RLMerr", "RLMlag", "SARMA"))
+```
+
+# 13. Spatially Lagged X (SLX) model
+Start with a spatially lagged x model. Spatially lagged x model – y=Xß+WXT+e.
+```{r}
+library(spatialreg)
+reg2=lmSLX(m,data=manchester_df, Mward.queens_weight)
+summary(reg2)
+```
+
+# 14. Spatial Lag Model (SLM)
+Running the SLM with a queen's case weights matrix. Spatial Lag (Autoregressive) Model - y=pWy+XB+e 
+```{r}
+reg3=lagsarlm(m,data=manchester_df, Mward.nn_weight)
+summary(reg3)
+
+```
+Check overall impacts, as infinite feedback loops so p-values for individual variables are meaningless
+```{r}
+impacts(reg3,listw=Mward.queens_weight)
+summary(impacts(reg3,listw=Mward.queens_weight,R=1000),zstats=TRUE) #Add zstats,pvals
+```
+
+# 15. Spatial Error Model (SEM)
+Next do a SEM
+```{r}
+reg4=errorsarlm(m,data=manchester_df, Mward.queens_weight)
+summary(reg4)
+```
+# 16. GWR and its plots
+Trying GWR
+```{r}
+library(spgwr)
+```
+```{r}
+#calculate kernel bandwidth
+GWRbandwidth <- gwr.sel(log1p(crimes) ~ popdens + deprivation + polstns, data=manchester_df, coords=coordsWards,adapt=T)
+
+```
+```{r}
+#run the gwr model
+gwr.model = gwr(m, coords=coordsWards, adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
+
+#print the results of the model
+gwr.model
+```
+
+Collect results
+```{r}
+results<-as.data.frame(gwr.model$SDF)
+names(results)
+```
+Attach results to original dataframe
+```{r}
+#attach coefficients to original dataframe
+manchester_final@data$coefpopdens<-results$popdens
+manchester_final@data$coefdeprivation<-results$deprivation
+manchester_final@data$coefpolstns<-results$polstns
+```
+
+Plotting GWR result for popdens
+```{r}
+tm_shape(manchester_final) +
+  tm_polygons(col = "coefpopdens", palette = "RdBu", alpha = 0.5)
+```
+Plotting GWR results for deprivation
+```{r}
+tm_shape(manchester_final) +
+  tm_polygons(col = "coefdeprivation", palette = "RdBu", alpha = 0.5) 
+```
+Plotting GWR results for police stations
+```{r}
+tm_shape(manchester_final) +
+  tm_polygons(col = "coefpolstns", palette = "RdBu", alpha = 0.5) 
+```
+
+Calculating standard errors for statistical significance for population density
+```{r}
+#run the significance test
+#sigTest = abs(gwr.model$SDF$"log(`Median House Price (£) - 2014`)") -2 * gwr.model$SDF$"log(`Median House Price (£) - 2014`)_se"
+
+sigTest = abs(gwr.model$SDF$"popdens") -2 * gwr.model$SDF$"popdens_se"
+
+#store significance results
+manchester_final$GWRpopdens<-sigTest
+
+```
+Plotting significance for population density on the map
+```{r}
+tm_shape(manchester_final) +
+  tm_polygons(col = "GWRpopdens", palette = "RdYlBu")
+```
+Plotting significance for deprivation on the map
+```{r}
+#run the significance test
+sigTest = abs(gwr.model$SDF$"deprivation") -2 * gwr.model$SDF$"deprivation_se"
+
+#store significance results
+manchester_final$GWRdeprivation<-sigTest
+#plotting
+tm_shape(manchester_final) +
+  tm_polygons(col = "GWRdeprivation", palette = "RdYlBu")
+sigTest
+```
+Plotting significance for police stations on the map
+```{r}
+#run the significance test
+sigTest = abs(gwr.model$SDF$"polstns") -2 * gwr.model$SDF$"polstns_se"
+
+#store significance results
+manchester_final$GWRpolstns<-sigTest
+#plotting
+tm_shape(manchester_final) +
+  tm_polygons(col = "GWRpolstns", palette = "RdYlBu")
+```
