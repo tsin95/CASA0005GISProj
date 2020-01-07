@@ -21,6 +21,6 @@ His informative and step-by-step video on different spatial regression models wa
 
 ### My report/write-up
  
-You can find my completed report in my Github repository, but I will link it [PLACEHOLDER](https://www.youtube.com/watch?v=nc7XhQrasCM&t=250s) again.
+You can find my completed report in my Github repository named "Report.pdf", but I will link it [here](https://github.com/tsin95/CASA0005GISProj/blob/master/Report.pdf) again.
 
 
