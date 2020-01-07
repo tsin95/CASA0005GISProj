@@ -856,8 +856,7 @@ Mward.nn_weight <- nb2listw(MWard_knn, style="W")
 Now we have defined our Wij  matrix, we can calculate the Moran’s I and other associated statistics.
 
 ## 10a. Moran's I across Manchester city 
-Moran’s I test tells us whether we have clustered values (close to 1) or dispersed values (close to -1), we will calculate for the densities rather than raw values. Result: SUFFICIENT EVIDENCE TO REJECT THE NULL HYPOTHESIS THAT THERE IS NO SPATIAL AUTOCORRELATION IN THE DENSITIES OF CRIME ACROSS VARIOUS MANCHESTER WARDS, as p-value smaller than 0.05
-With random data would expect value to be -0.0313, negative more often than positive, but observed result is positive
+Moran’s I test tells us whether we have clustered values (close to 1) or dispersed values (close to -1), we will calculate for the densities rather than raw values. 
 ```{r}
 I_MWard_Global_Density <- moran.test(manchester_final@data$crimedensity, Mward.queens_weight)
 I_MWard_Global_Density
